@@ -1,0 +1,72 @@
+{
+  "id": "juansync",
+  "name": "JuanSync",
+  "version": "1.0.0",
+  "apiVersion": 13,
+  "entry": "plugin.js",
+  "description": "Sincroniza tus datos de Kino entre todos tus dispositivos a través de JuanSync.",
+  "author": "JuanDEVYT",
+  "icon": "icon.png",
+  "hosts": [
+    "juansync.pythonanywhere.com"
+  ],
+  "capabilities": [
+    "syncProvider"
+  ],
+  "settings": [
+    {
+      "key": "needs",
+      "type": "help",
+      "title": "Cómo funciona",
+      "titleEn": "How it works",
+      "body": "JuanSync sincroniza tus datos de Kino entre tus dispositivos.\n\n1. Pulsa «Registrarse» para crear tu cuenta.\n2. El token se guarda solo.\n3. En tu otro dispositivo, usa «Enviar configuración» o pega el mismo token.",
+      "bodyEn": "JuanSync syncs your Kino data across your devices.\n\n1. Tap «Register» to create your account.\n2. The token is saved automatically.\n3. On your other device, use «Send settings» or paste the same token.",
+      "devices": ["phone"]
+    },
+    {
+      "key": "setup",
+      "label": "Cuenta",
+      "labelEn": "Account",
+      "type": "section",
+      "devices": ["phone"]
+    },
+    {
+      "key": "token",
+      "label": "Token",
+      "labelEn": "Token",
+      "type": "password",
+      "hint": "Se genera al registrarte o pégalo de otro dispositivo",
+      "hintEn": "Generated on register or paste from another device",
+      "devices": ["phone"]
+    },
+    {
+      "key": "register",
+      "label": "Registrarse",
+      "labelEn": "Register",
+      "type": "action",
+      "devices": ["phone"]
+    },
+    {
+      "key": "status",
+      "label": "Estado",
+      "labelEn": "Status",
+      "type": "status"
+    },
+    {
+      "key": "check",
+      "label": "Probar conexión",
+      "labelEn": "Test connection",
+      "type": "action"
+    }
+  ],
+  "sync": {
+    "mode": "poll",
+    "pullEveryMs": 300000,
+    "pushDebounceMs": 60000,
+    "maxBlobBytes": 4194304,
+    "keySecret": "token",
+    "provision": [
+      "token"
+    ]
+  }
+}
