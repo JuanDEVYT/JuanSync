@@ -149,10 +149,48 @@ export async function action(key) {
       return { message: t("Respuesta inesperada del servidor.", "Unexpected server response.") };
     }
 
-    const link = data.linkCode ? ` Código vinculación Telegram: ${data.linkCode}. Envía /vincular ${data.linkCode} a @JuanSync_bot` : "";
+    const link = data.linkCode ? `\n\nCódigo de vinculación para Telegram:\n${data.linkCode}\n\nAbre @JuanSync_bot en Telegram y envía:\n/vincular ${data.linkCode}` : "";
     return {
       setSettings: { token: data.token },
-      message: t("Cuenta creada y token guardado." + link, "Account created and token saved." + link),
+      message: t("🎉 ¡Cuenta creada con éxito!" + link, "🎉 Account created successfully!" + link),
+    };
+  }
+
+  if (key === "showLinkCode") {
+    const token = getToken();
+    if (!token) {
+      return { message: t("No tienes una cuenta configurada. Pulsa «Registrarse» primero.", "No account configured. Tap «Register» first.") };
+    }
+    let r;
+    try {
+      r = await kino.fetch(BASE + "/link-code", {
+        method: "GET",
+        headers: { "Authorization": "Bearer " + token },
+        cookies: false,
+        timeoutMs: 15000,
+      });
+    } catch (e) {
+      return { message: t("Error de conexión al obtener el código.", "Connection error while fetching code.") };
+    }
+    if (r.status !== 200) {
+      return { message: t("No se pudo obtener el código de vinculación.", "Could not retrieve linking code.") };
+    }
+    const data = r.json() || {};
+    const code = data.linkCode || "";
+    if (data.linked) {
+      const userTag = data.telegramUser ? " (@" + data.telegramUser + ")" : "";
+      return {
+        message: t(
+          "ℹ️ Tu cuenta ya está vinculada a Telegram" + userTag + ".\n\nSi deseas vincular otro chat, tu código es:\n" + code + "\n\nEnvía en Telegram a @JuanSync_bot:\n/vincular " + code,
+          "ℹ️ Your account is already linked to Telegram" + userTag + ".\n\nTo link another chat, your code is:\n" + code + "\n\nSend to @JuanSync_bot on Telegram:\n/vincular " + code
+        ),
+      };
+    }
+    return {
+      message: t(
+        "📱 Código de vinculación para Telegram:\n\n" + code + "\n\nAbre @JuanSync_bot en Telegram y envía:\n/vincular " + code,
+        "📱 Telegram linking code:\n\n" + code + "\n\nOpen @JuanSync_bot on Telegram and send:\n/vincular " + code
+      ),
     };
   }
 
@@ -173,9 +211,12 @@ export async function action(key) {
     } catch (e) {
       return { message: t("Error de red: " + (e && (e.message || e.code || String(e))), "Network error: " + (e && (e.message || e.code || String(e)))) };
     }
+    if (r.status === 404) {
+      return { message: t("No hay una cuenta vinculada a este usuario", "There is no account linked to this user") };
+    }
     if (r.status !== 200) {
-      const msg = r.text() || "";
-      return { message: msg.trim() || t("Usuario de Telegram no encontrado o no vinculado.", "Telegram user not found or not linked.") };
+      const msg = (r.text() || "").trim();
+      return { message: msg || t("No hay una cuenta vinculada a este usuario", "There is no account linked to this user") };
     }
     return { message: t("¡Código enviado por Telegram a @" + tgUser + "! Ingrésalo abajo y pulsa Restaurar.", "Code sent via Telegram to @" + tgUser + "! Enter it below and tap Restore.") };
   }
