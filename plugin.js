@@ -1,10 +1,5 @@
 // JuanSync – Kino sync provider plugin
 // Syncs Kino data across devices through juansync.pythonanywhere.com
-//
-// Kino encrypts the snapshot locally and hands this plugin only an opaque blob (base64).
-// The plugin stores it on the server with PUT /blob and fetches it back with GET /blob.
-// The version header (X-Version) makes writes conditional: If-Match carries the version
-// Kino last pulled, and a 409 means someone else wrote first -> "conflict".
 
 const BASE = "https://juansync.pythonanywhere.com";
 
@@ -125,19 +120,17 @@ async function describe() {
 
 export async function settingsStatus() {
   if (!String(kino.config.get("token") || "").trim()) {
-    return { status: t("Pulsa Registrarse para crear tu cuenta.", "Tap Register to create your account.") };
+    return { status: t("Pulsa Registrarse o recupera tu cuenta.", "Tap Register or recover your account.") };
   }
   return { status: await describe() };
 }
 
 export async function action(key) {
   if (key === "register") {
-    // Check if already has a token
     const existing = String(kino.config.get("token") || "").trim();
     if (existing) {
-      return { message: t("Ya tienes un token. Si quieres uno nuevo, borra el actual primero.", "You already have a token. Clear it first if you want a new one.") };
+      return { message: t("Ya tienes un token. Si deseas uno nuevo, bórralo primero.", "You already have a token. Clear it first if you want a new one.") };
     }
-    // Register
     let r;
     try {
       r = await kino.fetch(BASE + "/register", {
@@ -151,15 +144,72 @@ export async function action(key) {
     if (r.status !== 201) {
       return { message: t("Error al registrarse. Intenta de nuevo.", "Registration failed. Try again.") };
     }
-    const data = r.json();
-    if (!data || !data.token) {
+    const data = r.json() || {};
+    if (!data.token) {
       return { message: t("Respuesta inesperada del servidor.", "Unexpected server response.") };
     }
+
+    const link = data.linkCode ? ` Código vinculación Telegram: ${data.linkCode}. Envía /vincular ${data.linkCode} a @JuanSync_bot` : "";
     return {
       setSettings: { token: data.token },
-      message: t("Cuenta creada. Tu token se guardó automáticamente.", "Account created. Your token was saved automatically."),
+      message: t("Cuenta creada y token guardado." + link, "Account created and token saved." + link),
     };
   }
+
+  if (key === "requestRecover") {
+    const tgUser = String(kino.config.get("tgUser") || "").trim().replace(/^@/, "");
+    if (!tgUser) {
+      return { message: t("Escribe tu nombre de usuario de Telegram primero.", "Type your Telegram username first.") };
+    }
+    let r;
+    try {
+      r = await kino.fetch(BASE + "/recover", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: { account: tgUser },
+        cookies: false,
+        timeoutMs: 15000,
+      });
+    } catch (e) {
+      return { message: t("No se pudo conectar con el servidor.", "Could not reach the server.") };
+    }
+    if (r.status !== 200) {
+      return { message: r.text() || t("Usuario de Telegram no encontrado o no vinculado.", "Telegram user not found or not linked.") };
+    }
+    return { message: t("¡Código enviado por Telegram a @" + tgUser + "! Ingrésalo abajo y pulsa Restaurar.", "Code sent via Telegram to @" + tgUser + "! Enter it below and tap Restore.") };
+  }
+
+  if (key === "confirmRecover") {
+    const tgUser = String(kino.config.get("tgUser") || "").trim().replace(/^@/, "");
+    const code = String(kino.config.get("verifyCode") || "").trim();
+    if (!tgUser || !code) {
+      return { message: t("Ingresa tu usuario de Telegram y el código recibido.", "Enter your Telegram username and the received code.") };
+    }
+    let r;
+    try {
+      r = await kino.fetch(BASE + "/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: { account: tgUser, code },
+        cookies: false,
+        timeoutMs: 15000,
+      });
+    } catch (e) {
+      return { message: t("No se pudo conectar con el servidor.", "Could not reach the server.") };
+    }
+    if (r.status !== 200) {
+      return { message: r.text() || t("Código incorrecto o expirado.", "Invalid or expired code.") };
+    }
+    const data = r.json() || {};
+    if (!data.token) {
+      return { message: t("Respuesta inválida del servidor.", "Invalid server response.") };
+    }
+    return {
+      setSettings: { token: data.token, verifyCode: "" },
+      message: t("¡Cuenta restaurada con éxito! El token se ha configurado.", "Account restored successfully! Token has been configured."),
+    };
+  }
+
   if (key === "check") {
     return { message: await describe() };
   }

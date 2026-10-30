@@ -1,7 +1,7 @@
 {
   "id": "juansync",
   "name": "JuanSync",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "apiVersion": 13,
   "entry": "plugin.js",
   "description": "Sincroniza tus datos de Kino entre todos tus dispositivos a través de JuanSync.",
@@ -27,8 +27,8 @@
       "type": "help",
       "title": "Cómo funciona",
       "titleEn": "How it works",
-      "body": "JuanSync sincroniza tus datos de Kino entre tus dispositivos.\n\n1. Pulsa «Registrarse» para crear tu cuenta.\n2. El token se guarda solo.\n3. En tu otro dispositivo, usa «Enviar configuración» o pega el mismo token.",
-      "bodyEn": "JuanSync syncs your Kino data across your devices.\n\n1. Tap «Register» to create your account.\n2. The token is saved automatically.\n3. On your other device, use «Send settings» or paste the same token.",
+      "body": "JuanSync sincroniza tus datos de Kino entre tus dispositivos.\n\n1. Pulsa «Registrarse» para crear tu cuenta.\n2. Para no perder tu cuenta, abre el bot @JuanSync_bot en Telegram y envía:\n   /vincular <tu código>\n3. Si cambias de dispositivo, pulsa «Recuperar cuenta».",
+      "bodyEn": "JuanSync syncs your Kino data across your devices.\n\n1. Tap «Register» to create your account.\n2. To secure your account, message @JuanSync_bot on Telegram:\n   /vincular <your code>\n3. If you switch devices, tap «Recover account».",
       "devices": ["phone"]
     },
     {
@@ -51,6 +51,45 @@
       "key": "register",
       "label": "Registrarse",
       "labelEn": "Register",
+      "type": "action",
+      "devices": ["phone"]
+    },
+    {
+      "key": "recoverSec",
+      "label": "Recuperación por Telegram",
+      "labelEn": "Telegram Recovery",
+      "type": "section",
+      "devices": ["phone"]
+    },
+    {
+      "key": "tgUser",
+      "label": "Usuario de Telegram",
+      "labelEn": "Telegram Username",
+      "type": "text",
+      "hint": "Ejemplo: mi_usuario (sin @)",
+      "hintEn": "Example: my_username (without @)",
+      "devices": ["phone"]
+    },
+    {
+      "key": "requestRecover",
+      "label": "1. Pedir código a Telegram",
+      "labelEn": "1. Request Telegram Code",
+      "type": "action",
+      "devices": ["phone"]
+    },
+    {
+      "key": "verifyCode",
+      "label": "Código recibido",
+      "labelEn": "Received Code",
+      "type": "text",
+      "hint": "Código de 6 dígitos enviado por el bot",
+      "hintEn": "6-digit code sent by the bot",
+      "devices": ["phone"]
+    },
+    {
+      "key": "confirmRecover",
+      "label": "2. Restaurar cuenta",
+      "labelEn": "2. Restore Account",
       "type": "action",
       "devices": ["phone"]
     },
