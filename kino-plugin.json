@@ -1,8 +1,8 @@
 {
   "id": "juansync",
   "name": "JuanSync",
-  "version": "1.3.0",
-  "apiVersion": 13,
+  "version": "1.4.0",
+  "apiVersion": 14,
   "entry": "plugin.js",
   "description": "Sincroniza tus datos de Kino entre todos tus dispositivos a través de JuanSync.",
   "author": "JuanDEVYT",
@@ -19,8 +19,22 @@
     "juansync.pythonanywhere.com"
   ],
   "capabilities": [
-    "syncProvider"
+    "syncProvider",
+    "screen"
   ],
+  "screen": {
+    "label": "JuanSync",
+    "labelEn": "JuanSync",
+    "opensFrom": [
+      "menu",
+      "settings"
+    ],
+    "settingsIn": "both",
+    "settingsButton": {
+      "label": "Abrir JuanSync",
+      "labelEn": "Open JuanSync"
+    }
+  },
   "settings": [
     {
       "key": "needs",

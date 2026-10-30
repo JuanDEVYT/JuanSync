@@ -14,9 +14,10 @@ function fail(code, detail, say) {
   return e;
 }
 
-function getToken() {
+function getToken(required = true) {
   const token = String(kino.config.get("token") || "").trim();
   if (!token) {
+    if (!required) return null;
     throw fail(
       "auth_required",
       "token missing",
@@ -157,7 +158,7 @@ export async function action(key) {
   }
 
   if (key === "showLinkCode") {
-    const token = getToken();
+    const token = getToken(false);
     if (!token) {
       return { message: t("No tienes una cuenta configurada. Pulsa «Registrarse» primero.", "No account configured. Tap «Register» first.") };
     }
@@ -267,4 +268,319 @@ export async function validateSettings(values) {
       "That token is too short. It must be at least 32 characters.");
   }
   return Object.keys(out).length ? out : null;
+}
+
+// --- Screen App (apiVersion 14) ---
+
+const text = (esText, enText, style) => ({ type: "Text", text: esText, textEn: enText, ...(style ? { style } : {}) });
+const button = (esText, enText, onPressed, extra = {}) => ({ type: "ElevatedButton", labelText: esText, labelTextEn: enText, onPressed, ...extra });
+const textButton = (esText, enText, onPressed) => ({ type: "TextButton", labelText: esText, labelTextEn: enText, onPressed });
+const openUrl = (href, title) => ({ go: { url: { href, title } } });
+const isTv = () => kino.device === "tv";
+const said = (state) => [state.msg, state.err ? ("❌ " + state.err) : null].filter(Boolean).map((s) => ({ type: "Text", text: s, style: "body" }));
+
+function onlyCurrentOpen(item) {
+  if (item.state === "current") return item;
+  const { children, ...rest } = item;
+  return rest;
+}
+
+export async function screen({ state = {} } = {}) {
+  const token = getToken(false);
+
+  // 1. Pantalla cuando la cuenta ya está conectada
+  if (token) {
+    const linked = state.linkedInfo;
+    const hasTg = linked && linked.linked;
+    const tgUser = linked && linked.telegramUser ? "@" + linked.telegramUser : "";
+    const linkCode = linked && linked.linkCode ? linked.linkCode : "";
+
+    return {
+      type: "SingleChildScrollView",
+      key: "page_connected",
+      children: [{
+        type: "Column",
+        padding: { compact: 16, expanded: 32 },
+        gap: 12,
+        children: [
+          text("JuanSync", "JuanSync", "h1"),
+          text("Sincronización en la nube con respaldo y recuperación por Telegram.", "Cloud sync with Telegram backup and account recovery."),
+          {
+            type: "Card",
+            key: "status_card",
+            children: [
+              text("Estado de tu cuenta", "Account Status", "h2"),
+              text("✅ Conectado al servidor de sincronización", "✅ Connected to sync server", "body"),
+              hasTg
+                ? text("✅ Vinculado a Telegram (" + tgUser + ")", "✅ Linked to Telegram (" + tgUser + ")", "h3")
+                : text("⚠️ Tu cuenta no está vinculada a Telegram", "⚠️ Your account is not linked to Telegram", "h3"),
+              ...(!hasTg && linkCode ? [
+                text("Para no perder tus datos si cambias de dispositivo, abre @JuanSync_bot en Telegram y envía:",
+                  "To secure your data if you switch devices, open @JuanSync_bot on Telegram and send:"),
+                text("Código: " + linkCode, "Code: " + linkCode, "h2"),
+                button("Abrir @JuanSync_bot en Telegram", "Open @JuanSync_bot on Telegram", openUrl("https://t.me/JuanSync_bot", "@JuanSync_bot")),
+              ] : []),
+              button("Comprobar sincronización", "Check sync status", "screen_check"),
+              textButton("Cerrar sesión / Desconectar cuenta", "Log out / Disconnect account", "screen_logout"),
+              ...said(state),
+            ],
+          },
+        ],
+      }],
+    };
+  }
+
+  // 2. Pantalla cuando no hay cuenta (Pasos: Registrarse o Recuperar)
+  const currentStep = state.activeStep || "register";
+
+  return {
+    type: "SingleChildScrollView",
+    key: "page_setup",
+    children: [{
+      type: "Column",
+      padding: { compact: 16, expanded: 32 },
+      gap: 12,
+      children: [
+        text("JuanSync", "JuanSync", "h1"),
+        text("Sincroniza tu biblioteca, historial y ajustes entre tus dispositivos.", "Sync your library, watch history, and settings across your devices."),
+        {
+          type: "steps",
+          key: "setup_steps",
+          items: [
+            {
+              key: "register",
+              title: "Crear cuenta nueva",
+              titleEn: "Create new account",
+              subtitle: "Un solo toque",
+              subtitleEn: "One tap",
+              state: currentStep === "register" ? "current" : "pending",
+              children: [
+                text("Crea tu cuenta de JuanSync con un solo toque sin contraseñas.", "Create your JuanSync account with one tap without passwords."),
+                button("Crear mi cuenta", "Create my account", "screen_register"),
+                ...(state.registeredCode ? [
+                  text("🎉 ¡Cuenta creada con éxito!", "🎉 Account created successfully!", "h2"),
+                  text("Tu código de vinculación para Telegram es:", "Your Telegram linking code is:"),
+                  text(state.registeredCode, state.registeredCode, "h1"),
+                  text("Para no perder tu cuenta, abre @JuanSync_bot en Telegram y envía /vincular " + state.registeredCode,
+                    "To secure your account, open @JuanSync_bot on Telegram and send /vincular " + state.registeredCode),
+                  button("Abrir @JuanSync_bot en Telegram", "Open @JuanSync_bot on Telegram", openUrl("https://t.me/JuanSync_bot", "@JuanSync_bot")),
+                  button("Continuar a mi cuenta", "Continue to my account", "screen_open"),
+                ] : []),
+                textButton("¿Ya tienes cuenta? Recuperar con Telegram", "Already have an account? Recover with Telegram", "goto_recover"),
+                ...said(state),
+              ],
+            },
+            {
+              key: "recover",
+              title: "Recuperar cuenta existente",
+              titleEn: "Recover existing account",
+              subtitle: "Con Telegram",
+              subtitleEn: "Via Telegram",
+              state: currentStep === "recover" ? "current" : "pending",
+              children: [
+                text("Escribe tu nombre de usuario de Telegram para enviarte un código de acceso:",
+                  "Type your Telegram username to receive an access code:"),
+                {
+                  type: "Form",
+                  key: "recover_form",
+                  onSubmitted: "screen_request_recover",
+                  children: [
+                    {
+                      type: "TextField",
+                      key: "tgUser",
+                      labelText: "Usuario de Telegram (sin @)",
+                      labelTextEn: "Telegram username (without @)",
+                      hintText: "ej: mi_usuario",
+                      hintTextEn: "eg: my_username",
+                      required: true,
+                    },
+                    {
+                      type: "ElevatedButton",
+                      labelText: "1. Pedir código a Telegram",
+                      labelTextEn: "1. Request code from Telegram",
+                      submit: true,
+                    },
+                  ],
+                },
+                ...(state.codeSent ? [
+                  text("¡Código enviado a @" + state.recoverUser + "! Ingrésalo para restaurar tu cuenta:",
+                    "Code sent to @" + state.recoverUser + "! Enter it to restore your account:", "h3"),
+                  {
+                    type: "Form",
+                    key: "verify_form",
+                    onSubmitted: "screen_confirm_recover",
+                    children: [
+                      {
+                        type: "TextField",
+                        key: "verifyCode",
+                        labelText: "Código de 6 dígitos",
+                        labelTextEn: "6-digit code",
+                        hintText: "123456",
+                        hintTextEn: "123456",
+                        maxLength: 6,
+                        required: true,
+                      },
+                      {
+                        type: "ElevatedButton",
+                        labelText: "2. Restaurar mi cuenta",
+                        labelTextEn: "2. Restore my account",
+                        submit: true,
+                      },
+                    ],
+                  },
+                ] : []),
+                textButton("Volver a crear cuenta nueva", "Back to create new account", "goto_register"),
+                ...said(state),
+              ],
+            },
+          ].map(onlyCurrentOpen),
+        },
+      ],
+    }],
+  };
+}
+
+export async function screenEvent({ name, value, arg, state = {} } = {}) {
+  // Navegación entre pasos
+  if (name === "goto_recover") {
+    return { state: { ...state, activeStep: "recover", msg: null, err: null } };
+  }
+  if (name === "goto_register") {
+    return { state: { ...state, activeStep: "register", msg: null, err: null } };
+  }
+
+  // Al abrir la pantalla: si hay token, consulta vinculación
+  if (name === "open" || name === "screen_open") {
+    const token = getToken(false);
+    if (token) {
+      try {
+        const r = await kino.fetch(BASE + "/link-code", {
+          method: "GET",
+          headers: { "Authorization": "Bearer " + token },
+          cookies: false,
+          timeoutMs: 10000,
+        });
+        if (r.status === 200) {
+          return { state: { ...state, linkedInfo: r.json() } };
+        }
+      } catch (_) {}
+    }
+    return null;
+  }
+
+  // Registro desde la App
+  if (name === "screen_register") {
+    try {
+      const r = await kino.fetch(BASE + "/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+        cookies: false,
+        timeoutMs: 15000,
+      });
+      if (r.status === 201) {
+        const data = r.json() || {};
+        return {
+          config: { token: data.token },
+          state: {
+            ...state,
+            registeredCode: data.linkCode,
+            msg: t("¡Cuenta creada!", "Account created!"),
+            err: null,
+          },
+        };
+      }
+      return { state: { ...state, err: t("Error al registrarse en el servidor.", "Error registering with server.") } };
+    } catch (e) {
+      return { state: { ...state, err: t("No se pudo conectar con el servidor.", "Could not reach server.") } };
+    }
+  }
+
+  // Solicitar código de recuperación desde la App
+  if (name === "screen_request_recover") {
+    const tgUser = String(value && value.tgUser || arg || "").trim().replace(/^@/, "");
+    if (!tgUser) {
+      return { state: { ...state, err: t("Ingresa tu usuario de Telegram.", "Enter your Telegram username.") } };
+    }
+    try {
+      const r = await kino.fetch(BASE + "/recover", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ account: tgUser }),
+        cookies: false,
+        timeoutMs: 15000,
+      });
+      if (r.status === 404) {
+        return { state: { ...state, err: t("No hay una cuenta vinculada a este usuario", "There is no account linked to this user") } };
+      }
+      if (r.status !== 200) {
+        const bodyText = (r.text() || "").trim();
+        return { state: { ...state, err: bodyText || t("No hay una cuenta vinculada a este usuario", "There is no account linked to this user") } };
+      }
+      return {
+        state: {
+          ...state,
+          codeSent: true,
+          recoverUser: tgUser,
+          msg: t("¡Código enviado por Telegram a @" + tgUser + "!", "Code sent via Telegram to @" + tgUser + "!"),
+          err: null,
+        },
+      };
+    } catch (e) {
+      return { state: { ...state, err: t("Error de conexión al solicitar el código.", "Connection error requesting code.") } };
+    }
+  }
+
+  // Confirmar código de recuperación desde la App
+  if (name === "screen_confirm_recover") {
+    const tgUser = state.recoverUser;
+    const code = String(value && value.verifyCode || arg || "").trim();
+    if (!tgUser || !code) {
+      return { state: { ...state, err: t("Ingresa el código recibido en Telegram.", "Enter the code received on Telegram.") } };
+    }
+    try {
+      const r = await kino.fetch(BASE + "/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ account: tgUser, code }),
+        cookies: false,
+        timeoutMs: 15000,
+      });
+      if (r.status !== 200) {
+        const bodyText = (r.text() || "").trim();
+        return { state: { ...state, err: bodyText || t("Código incorrecto o expirado.", "Invalid or expired code.") } };
+      }
+      const data = r.json() || {};
+      if (data.token) {
+        return {
+          config: { token: data.token },
+          state: {
+            ...state,
+            codeSent: false,
+            msg: t("¡Cuenta restaurada con éxito!", "Account restored successfully!"),
+            err: null,
+          },
+        };
+      }
+      return { state: { ...state, err: t("Respuesta inválida del servidor.", "Invalid response from server.") } };
+    } catch (e) {
+      return { state: { ...state, err: t("Error de conexión al verificar el código.", "Connection error verifying code.") } };
+    }
+  }
+
+  // Probar estado
+  if (name === "screen_check") {
+    const msg = await describe();
+    return { state: { ...state, msg, err: null } };
+  }
+
+  // Desconectar / Salir
+  if (name === "screen_logout") {
+    return {
+      config: { token: "" },
+      state: { msg: t("Sesión cerrada.", "Logged out."), err: null, linkedInfo: null },
+    };
+  }
+
+  return null;
 }
