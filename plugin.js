@@ -166,15 +166,16 @@ export async function action(key) {
       r = await kino.fetch(BASE + "/recover", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: { account: tgUser },
+        body: JSON.stringify({ account: tgUser }),
         cookies: false,
         timeoutMs: 15000,
       });
     } catch (e) {
-      return { message: t("No se pudo conectar con el servidor.", "Could not reach the server.") };
+      return { message: t("Error de red: " + (e && (e.message || e.code || String(e))), "Network error: " + (e && (e.message || e.code || String(e)))) };
     }
     if (r.status !== 200) {
-      return { message: r.text() || t("Usuario de Telegram no encontrado o no vinculado.", "Telegram user not found or not linked.") };
+      const msg = r.text() || "";
+      return { message: msg.trim() || t("Usuario de Telegram no encontrado o no vinculado.", "Telegram user not found or not linked.") };
     }
     return { message: t("¡Código enviado por Telegram a @" + tgUser + "! Ingrésalo abajo y pulsa Restaurar.", "Code sent via Telegram to @" + tgUser + "! Enter it below and tap Restore.") };
   }
@@ -190,15 +191,16 @@ export async function action(key) {
       r = await kino.fetch(BASE + "/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: { account: tgUser, code },
+        body: JSON.stringify({ account: tgUser, code }),
         cookies: false,
         timeoutMs: 15000,
       });
     } catch (e) {
-      return { message: t("No se pudo conectar con el servidor.", "Could not reach the server.") };
+      return { message: t("Error de red: " + (e && (e.message || e.code || String(e))), "Network error: " + (e && (e.message || e.code || String(e)))) };
     }
     if (r.status !== 200) {
-      return { message: r.text() || t("Código incorrecto o expirado.", "Invalid or expired code.") };
+      const msg = r.text() || "";
+      return { message: msg.trim() || t("Código incorrecto o expirado.", "Invalid or expired code.") };
     }
     const data = r.json() || {};
     if (!data.token) {

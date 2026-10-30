@@ -1,7 +1,7 @@
 {
   "id": "juansync",
   "name": "JuanSync",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "apiVersion": 13,
   "entry": "plugin.js",
   "description": "Sincroniza tus datos de Kino entre todos tus dispositivos a través de JuanSync.",
