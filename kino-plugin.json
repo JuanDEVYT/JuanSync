@@ -1,11 +1,12 @@
 {
   "id": "juansync",
   "name": "JuanSync",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "apiVersion": 14,
   "entry": "plugin.js",
   "description": "Sincroniza tus datos de Kino entre todos tus dispositivos a través de JuanSync.",
   "author": "JuanDEVYT",
+  "creator": "JuandreXter",
   "icon": "icon.png",
   "color": "#000000",
   "theme": {
@@ -43,14 +44,18 @@
       "titleEn": "How it works",
       "body": "JuanSync sincroniza tus datos de Kino entre tus dispositivos.\n\n1. Pulsa «Registrarse» para crear tu cuenta.\n2. Para no perder tu cuenta, abre el bot @JuanSync_bot en Telegram y envía:\n   /vincular <tu código>\n3. Si cambias de dispositivo, pulsa «Recuperar cuenta».",
       "bodyEn": "JuanSync syncs your Kino data across your devices.\n\n1. Tap «Register» to create your account.\n2. To secure your account, message @JuanSync_bot on Telegram:\n   /vincular <your code>\n3. If you switch devices, tap «Recover account».",
-      "devices": ["phone"]
+      "devices": [
+        "phone"
+      ]
     },
     {
       "key": "setup",
       "label": "Cuenta",
       "labelEn": "Account",
       "type": "section",
-      "devices": ["phone"]
+      "devices": [
+        "phone"
+      ]
     },
     {
       "key": "token",
@@ -59,28 +64,36 @@
       "type": "password",
       "hint": "Se genera al registrarte o pégalo de otro dispositivo",
       "hintEn": "Generated on register or paste from another device",
-      "devices": ["phone"]
+      "devices": [
+        "phone"
+      ]
     },
     {
       "key": "register",
       "label": "Registrarse",
       "labelEn": "Register",
       "type": "action",
-      "devices": ["phone"]
+      "devices": [
+        "phone"
+      ]
     },
     {
       "key": "showLinkCode",
       "label": "Ver código de vinculación",
       "labelEn": "Show linking code",
       "type": "action",
-      "devices": ["phone"]
+      "devices": [
+        "phone"
+      ]
     },
     {
       "key": "recoverSec",
       "label": "Recuperación por Telegram",
       "labelEn": "Telegram Recovery",
       "type": "section",
-      "devices": ["phone"]
+      "devices": [
+        "phone"
+      ]
     },
     {
       "key": "tgUser",
@@ -89,14 +102,18 @@
       "type": "text",
       "hint": "Ejemplo: mi_usuario (sin @)",
       "hintEn": "Example: my_username (without @)",
-      "devices": ["phone"]
+      "devices": [
+        "phone"
+      ]
     },
     {
       "key": "requestRecover",
       "label": "1. Pedir código a Telegram",
       "labelEn": "1. Request Telegram Code",
       "type": "action",
-      "devices": ["phone"]
+      "devices": [
+        "phone"
+      ]
     },
     {
       "key": "verifyCode",
@@ -105,14 +122,18 @@
       "type": "text",
       "hint": "Código de 6 dígitos enviado por el bot",
       "hintEn": "6-digit code sent by the bot",
-      "devices": ["phone"]
+      "devices": [
+        "phone"
+      ]
     },
     {
       "key": "confirmRecover",
       "label": "2. Restaurar cuenta",
       "labelEn": "2. Restore Account",
       "type": "action",
-      "devices": ["phone"]
+      "devices": [
+        "phone"
+      ]
     },
     {
       "key": "status",
