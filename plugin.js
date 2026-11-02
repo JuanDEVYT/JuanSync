@@ -278,6 +278,7 @@ const text = (esText, enText, style, extra = {}) => ({ type: "Text", text: esTex
 const button = (esText, enText, onPressed, extra = {}) => ({ type: "ElevatedButton", labelText: esText, labelTextEn: enText, onPressed, ...extra });
 const textButton = (esText, enText, onPressed, extra = {}) => ({ type: "TextButton", labelText: esText, labelTextEn: enText, onPressed, ...extra });
 const openUrl = (href, title) => ({ go: { url: { href, title } } });
+const HERO_IMAGE = "https://raw.githubusercontent.com/JuanDEVYT/JuanSync/main/hero.png";
 
 function notice(state) {
   if (!state.msg && !state.err) return null;
@@ -320,7 +321,7 @@ function connectedBody(state) {
   return {
     type: "SingleChildScrollView", key: "connected-scroll", flex: 1, children: [{
       type: "Column", padding: { compact: 16, expanded: 32 }, gap: 16, maxWidth: 640, alignSelf: "center", children: [
-        { type: "heroCard", title: "Todo tu Kino, contigo", titleEn: "Your Kino, with you", text: "Biblioteca, historial y ajustes sincronizados entre tus dispositivos.", textEn: "Library, history and settings synced across your devices.", icon: "sync", buttons: [button("Comprobar conexión", "Check connection", "screen_check")] },
+        { type: "heroCard", title: "Todo tu Kino, contigo", titleEn: "Your Kino, with you", image: HERO_IMAGE, text: "Biblioteca, historial y ajustes sincronizados entre tus dispositivos.", textEn: "Library, history and settings synced across your devices.", icon: "sync", buttons: [button("Comprobar conexión", "Check connection", "screen_check")] },
         accountCard(state.linkedInfo),
         ...(notice(state) ? [notice(state)] : []),
         { type: "Card", key: "account-actions", padding: 8, borderRadius: "large", children: [
@@ -373,7 +374,7 @@ function setupBody(state) {
   return {
     type: "SingleChildScrollView", key: "setup-scroll", flex: 1, children: [{
       type: "Column", padding: { compact: 16, expanded: 32 }, gap: 16, maxWidth: 640, alignSelf: "center", children: [
-        { type: "heroCard", title: "JuanSync", text: "Tu Kino permanece contigo, en cada pantalla.", textEn: "Your Kino stays with you, on every screen.", icon: "sync" },
+        { type: "heroCard", title: "JuanSync", image: HERO_IMAGE, text: "Tu Kino permanece contigo, en cada pantalla.", textEn: "Your Kino stays with you, on every screen.", icon: "sync" },
         { type: "steps", key: "setup-progress", items: [
           { key: "create", title: "Crear", titleEn: "Create", subtitle: "Un toque", subtitleEn: "One tap", state: recovery || registered ? "done" : "current" },
           { key: "protect", title: "Proteger", titleEn: "Protect", subtitle: "Telegram", state: recovery || registered ? "current" : "pending" },
@@ -388,13 +389,8 @@ function setupBody(state) {
 
 export async function screen({ state = {} } = {}) {
   const connected = !!getToken(false);
-  return {
-    type: "Scaffold",
-    appBar: { type: "AppBar", title: "JuanSync", titleEn: "JuanSync", actions: [
-      { type: "IconButton", icon: "refresh", labelText: "Actualizar", labelTextEn: "Refresh", tooltip: "Actualizar", tooltipEn: "Refresh", onPressed: connected ? "screen_open" : "screen_reset" },
-    ] },
-    body: connected ? connectedBody(state) : setupBody(state),
-  };
+  // Kino provides the screen title and close controls; do not duplicate its AppBar.
+  return connected ? connectedBody(state) : setupBody(state);
 }
 
 export async function screenEvent({ name, value, values, arg, state = {} } = {}) {

@@ -1,7 +1,7 @@
 {
   "id": "juansync",
   "name": "JuanSync",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "apiVersion": 14,
   "entry": "plugin.js",
   "description": "Sincroniza tus datos de Kino entre todos tus dispositivos a través de JuanSync.",
@@ -10,8 +10,8 @@
   "icon": "icon.png",
   "color": "#000000",
   "theme": {
-    "accent": "#FFFFFF",
-    "onAccent": "#000000",
+    "accent": "#35C985",
+    "onAccent": "#062218",
     "background": "#000000",
     "surface": "#1A1A1A",
     "highlight": "#8A8A8A"
